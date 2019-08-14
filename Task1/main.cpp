@@ -1,5 +1,6 @@
 #include "opengl.h"
-#include "shader.h"
+#include "Shader.h"
+#include "Camera.h"
 
 #include <stdio.h>
 #include <iostream>
@@ -26,6 +27,8 @@ const char* fragShaderSource =
 	"{\n"
 	"	FragColor = vec4(outColor, 0.5f);\n"
 	"}\0";
+
+Camera mainCamera(glm::vec3(0.0f, 0.0f, 5.0f));
 
 void processInput(GLFWwindow* window)
 {
@@ -58,85 +61,72 @@ int main()
 		return -1;
 	}
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask(GL_FALSE);
+	glEnable(GL_DEPTH_TEST);
+	// glEnable(GL_BLEND);
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// glDepthMask(GL_TRUE);
 
 	//SHADER
 	Shader shader("shader/vertexShader.vs", "shader/fragmentShader.fs");
 
-	/*
-	//VERTEX SHADER
-	int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	//CHECK COMPILE
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "VERTEX SHADER COMPILE ERROR\n" << infoLog << std::endl;
-	}
-
-	//FRAGMENT SHADER
-	int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShader, 1, &fragShaderSource, NULL);
-	glCompileShader(fragShader);
-
-	//CHECK COMPILE
-	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fragShader, 512, NULL, infoLog);
-		std::cout << "FRAGMENT SHADER COMPILE ERROR\n" << infoLog << std::endl;
-	}
-
-	//LINK SHADER
-	int shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragShader);
-	glLinkProgram(shaderProgram);
-
-	//CHECK COMPILE
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "SHADER PROGRAM LINK ERROR\n" << infoLog << std::endl;
-	}
-
-	//DELETE SHADER because don't need them any more
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragShader);
-	*/
-
-	glViewport(0, 0, 800, 600);
+	// glViewport(0, 0, 800, 600);
 
 	//vertex info
 	float vertices[] =
 	{
 		// position              // color					//texture
-		-0.5f, -0.7f,  0.0f,    1.0f, 0.0f, 0.0f, 0.4f,		0.0f, 1.0f,		// bottom left
-		 0.1f, -0.7f,  0.0f,	1.0f, 0.0f, 0.0f, 0.4f,		1.0f, 1.0f,		// bottom right
-		-0.5f,  0.1f,  0.0f,	1.0f, 0.0f, 0.0f, 0.4f,		0.0f, 0.0f,		// top left
-		 0.1f,  0.1f,  0.0f,	1.0f, 0.0f, 0.0f, 0.4f,		1.0f, 0.0f,		// top right
+	// front
+		-0.5f, -0.5f,  0.0f,    1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 0.0f,		// btttom left
+		 0.2f, -0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 0.0f,		// bottom right
+		-0.5f,  0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 1.0f,		// top left
+		 0.2f,  0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 1.0f,		// top right
 
-		-0.1f, -0.2f,  0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		0.0f, 1.0f,
-		 0.5f, -0.2f,  0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		1.0f, 1.0f,
-		-0.1f,  0.6f,  0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		0.0f, 0.0f,
-		 0.5f,  0.6f,  0.0f,	0.0f, 1.0f, 0.0f, 1.0f,		1.0f, 0.0f,
+	// back
+		 0.5f, -0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 0.0f,		// bottom left
+		-0.5f, -0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 0.0f,		// bottom right
+		 0.5f,  0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 1.0f,		// top left
+		-0.5f,  0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 1.0f,		// top right
+
+	// left
+		-0.5f, -0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 0.0f,		// bottom left
+		-0.5f, -0.5f,  0.0f,    1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 0.0f,		// bottom right
+		-0.5f,  0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 1.0f,		// top left
+		-0.5f,  0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 1.0f,		// top right
+
+	// right
+		 0.5f, -0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 0.0f,		// bottom left
+		 0.5f, -0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 0.0f,		// bottom right
+		 0.5f,  0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 1.0f,		// top left
+		 0.5f,  0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 1.0f,		// top right
+
+	// top
+		-0.5f,  0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 0.0f,		// bottom left
+		 0.5f,  0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 0.0f,		// bottom right
+		-0.5f,  0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 1.0f,		// top left
+		 0.5f,  0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 1.0f,		// top right
+
+	// bottom
+		-0.5f, -0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 0.0f,		// bottom left
+		 0.5f, -0.5f,  1.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 0.0f,		// bottom right
+		-0.5f, -0.5f,  0.0f,    1.0f, 1.0f, 1.0f, 0.5f,		0.0f, 1.0f,		// bottom left
+		 0.5f, -0.5f,  0.0f,	1.0f, 1.0f, 1.0f, 0.5f,		1.0f, 1.0f,		// bottom right
 	};
 
 	//indices info
 	unsigned int indices[] =
 	{
-		4, 5, 6,
-		5, 6, 7,
-		0, 1, 2,
-		1, 2, 3,
+		 0, 1, 2,
+		 1, 2, 3,
+		 4, 5, 6,
+		 5, 6, 7,
+		 8, 9,10,
+		 9,10,11,
+		12,13,14,
+		13,14,15,
+		16,17,18,
+		17,18,19,
+		20,21,22,
+		21,22,23
 	};
 
 	//vertex buffer
@@ -200,6 +190,9 @@ int main()
 	}
 	stbi_image_free(data);
 
+	shader.use();
+	shader.setInt("texture", 0);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		// input
@@ -207,15 +200,29 @@ int main()
 
 		// rendering
 		glClearColor(0, 0, 1, 0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glActiveTexture(GL_TEXTURE);
+		glBindTexture(GL_TEXTURE_2D, texture);
 
 		// use shader program
 		// glUseProgram(shaderProgram);
 		shader.use();
 
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glm::mat4 projection = glm::perspective(glm::radians(mainCamera.Zoom), 800.0f / 600.0f, 0.1f, 100.0f);
+		shader.setMat4("projection", projection);
+
+		glm::mat4 view = mainCamera.GetViewMatrix();
+		shader.setMat4("view", view);
+
+		glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
+		shader.setMat4("model", model);
+
+		// glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 		// check and call events and swap buffers
 		glfwSwapBuffers(window);
